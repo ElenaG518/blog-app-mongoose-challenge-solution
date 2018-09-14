@@ -223,6 +223,32 @@ describe('BlogPosts API resource', function() {
     });
   });
 
+  describe('DELETE endpoint', function() {
+    // strategy:
+    //  1. get a blog
+    //  2. make a DELETE request for that blog's id
+    //  3. assert that response has right status code
+    //  4. prove that blog with the id doesn't exist in db anymore
+    it('delete a blog by id', function() {
+
+      let post;
+
+      return BlogPost
+        .findOne()
+        .then(function(_post) {
+          post = _post;
+          return chai.request(app).delete(`/posts/${post.id}`);
+        })
+        .then(function(res) {
+          expect(res).to.have.status(204);
+          return BlogPost.findById(post.id);
+        })
+        .then(function(_post) {
+          expect(_post).to.be.null;
+        });
+    });
+  });
+});
 
 
 
