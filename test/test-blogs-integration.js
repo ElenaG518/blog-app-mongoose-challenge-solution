@@ -185,6 +185,43 @@ describe('BlogPosts API resource', function() {
     });
   });
 
+  describe('PUT endpoint', function() {
+
+    // strategy:
+    //  1. Get an existing blog from db
+    //  2. Make a PUT request to update that blog
+    //  3. Prove blog returned by request contains data we sent
+    //  4. Prove blog in db is correctly updated
+    it('should update fields you send over', function() {
+      const updateData = {
+        author.firstName: 'Elena',
+        author.lastName: 'Granados'
+        content: 'To complete this challenge, we\'d like you to add integration tests for all four of the API endpoints. Your integration tests should use the strategy described in the previous assignment (set up db in known state, make a request to API, inspect response, inspect state of db, and tear down db). At a minimum, you should write tests for the normal case for each endpoint.'
+      };
+
+      return BlogPost
+        .findOne()
+        .then(function(post) {
+          updateData.id = post.id;
+
+          // make request then inspect it to make sure it reflects
+          // data we sent
+          return chai.request(app)
+            .put(`/posts/${post.id}`)
+            .send(updateData);
+        })
+        .then(function(res) {
+          expect(res).to.have.status(204);
+
+          return BlogPost.findById(updateData.id);
+        })
+        .then(function(post) {
+          expect(post.author.firstName).to.equal(updateData.author.firstName);
+          expect(post.author.lastName).to.equal(updateData.author.lastName);
+          expect(post.content).to.equal(updateData.content);
+        });
+    });
+  });
 
 
 
