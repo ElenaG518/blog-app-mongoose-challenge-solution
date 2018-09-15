@@ -107,11 +107,11 @@ describe('BlogPosts API resource', function() {
           res = _res;
           expect(res).to.have.status(200);
           // otherwise our db seeding didn't work
-          expect(res.body.blogposts).to.have.lengthOf.at.least(1);
+          expect(res.body).to.have.lengthOf.at.least(1);
           return BlogPost.count();
         })
         .then(function(count) {
-          expect(res.body.blogposts).to.have.lengthOf(count);
+          expect(res.body).to.have.lengthOf(count);
         });
     });
 
@@ -125,25 +125,25 @@ describe('BlogPosts API resource', function() {
         .then(function(res) {
           expect(res).to.have.status(200);
           expect(res).to.be.json;
-          expect(res.body.posts).to.be.a('array');
-          expect(res.body.posts).to.have.lengthOf.at.least(1);
+          expect(res.body).to.be.a('array');
+          expect(res.body).to.have.lengthOf.at.least(1);
 
-	      res.body.posts.forEach(function(post) {
+	      res.body.forEach(function(post) {
             expect(post).to.be.a('object');
             expect(post).to.include.keys(
               'author', 'title', 'content', 'created');
           });
-          resBlogPost = res.body.posts[0];
+          resBlogPost = res.body[0];
           return BlogPost.findById(resBlogPost.id);
         })
         .then(function(post) {
 
           expect(resBlogPost.id).to.equal(post.id);
-          expect(resBlogPost.author.firstName).to.equal(post.author.firstName);
-          expect(resBlogPost.author.lastName).to.equal(post.author.lastName);
+          expect(resBlogPost.author).to.equal(post.authorName);
+          
           expect(resBlogPost.title).to.equal(post.title);
           expect(resBlogPost.content).to.equal(post.content);
-          expect(resBlogPost.created).to.equal(post.created);
+          // expect(resBlogPost.created).to.equal(post.created);
         });
     });
   });
@@ -156,7 +156,6 @@ describe('BlogPosts API resource', function() {
     it('should add a new blog', function() {
 
       const newBlogPost = generateBlogPostData();
-      console.log(newBlogPost);
       
       return chai.request(app)
         .post('/posts')
