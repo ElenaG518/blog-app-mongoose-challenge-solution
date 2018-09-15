@@ -46,10 +46,10 @@ function generateBlogPostData() {
     author: {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName()
-    }
+    },
     title: generateTitleName(),
-    content: lorem.paragraph(),
-    created: date.past(),
+    content: faker.lorem.paragraph(),
+    created: faker.date.past(),
   };
 }
 
@@ -107,11 +107,11 @@ describe('BlogPosts API resource', function() {
           res = _res;
           expect(res).to.have.status(200);
           // otherwise our db seeding didn't work
-          expect(res.body.posts).to.have.lengthOf.at.least(1);
+          expect(res.body.blogs).to.have.lengthOf.at.least(1);
           return BlogPost.count();
         })
         .then(function(count) {
-          expect(res.body.posts).to.have.lengthOf(count);
+          expect(res.body.blogposts).to.have.lengthOf(count);
         });
     });
 
@@ -164,23 +164,23 @@ describe('BlogPosts API resource', function() {
           expect(res).to.have.status(201);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(post).to.include.keys(
+          expect(res.body).to.include.keys(
               'author', 'title', 'content', 'created');
-          expect(res.body.author.firstName).to.equal(newBlogPost.author.firstName);
-          expect(res.body.author.lastName).to.equal(newBlogPost.author.lastName);
+          expect(res.body.author).to.contain(newBlogPost.author.firstName);
+          expect(res.body.author).to.contain(newBlogPost.author.lastName);
           // cause Mongo should have created id on insertion
           expect(res.body.id).to.not.be.null;
           expect(res.body.content).to.equal(newBlogPost.content);
           expect(res.body.created).to.equal(newBlogPost.created);
           
-          return Restaurant.findById(res.body.id);
+          return BlogPost.findById(res.body.id);
         })
         .then(function(post) {
-          expect(post.author.firstName).to.equal(resBlogPost.author.firstName);
-          expect(post.author.lastName).to.equal(resBlogPost.author.lastName);
-          expect(post.title).to.equal(resBlogPost.title);
-          expect(post.content).to.equal(resBlogPost.content);
-          expect(post.created).to.equal(resBlogPost.created);
+          expect(post.author).to.include(newBlogPost.author.firstName);
+          expect(post.author).to.include(newBlogPost.author.lastName);
+          expect(post.title).to.equal(newBlogPost.title);
+          expect(post.content).to.equal(newBlogPost.content);
+          expect(post.created).to.equal(newBlogPost.created);
         });
     });
   });
@@ -194,8 +194,7 @@ describe('BlogPosts API resource', function() {
     //  4. Prove blog in db is correctly updated
     it('should update fields you send over', function() {
       const updateData = {
-        author.firstName: 'Elena',
-        author.lastName: 'Granados'
+        author:'Elena Granados',
         content: 'To complete this challenge, we\'d like you to add integration tests for all four of the API endpoints. Your integration tests should use the strategy described in the previous assignment (set up db in known state, make a request to API, inspect response, inspect state of db, and tear down db). At a minimum, you should write tests for the normal case for each endpoint.'
       };
 
