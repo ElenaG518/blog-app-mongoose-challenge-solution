@@ -2,3 +2,10 @@ language: node_js
 node_js: node
 services:
 - mongodb
+deploy: protected-brushlands-31804
+  provider: heroku
+  api_key:
+    secure: OWCibfB/FbDUKuP4Nilqj9QZ/m8nNSqL+e58bW6OYR62H4su4ddCokQDZIM+67KSk1fPrAN/Mp30xYxeEqP1/1NFLTxBaiP5NALm9iOaWfjcWoJVN6vfVn9aZuVxZ1/D4JPzOTybZDAO4q190GBhmC+YV/0Ez/PpXEgkc6XGW/F5C6OJeB5VM7vCX6vDvNNvDpoIzL7IzDQieVlIs6hpH1VMek2AosRi+5eDzsRPHigpQH5y/ww1TzE1szKYkCfseGe6EGLJ1hBQyEsTVqFbOJCUrnwaNihtz0VNVD0ekwGvsRrDCQKEms/OVA0HmDJgPO+bQLmxiBcoWJFogMjEjGgxKPDZ5jGdN1ZuH9BmwaaOhS5d/V1ZurJhrXawic88N5y7TS9mdgRgEHeIVw1KI1DSSWeRZmeKYK3ANJ1PKd8IcMCMY7vZQ0QWkmtyoDFOQPHzgid2PI5Q2CEctYmDifta4rrjlbH281ytzlIOYsmTJYaXPclZjLl3fqtbMi25rAF2aHfjyKuLjYZ5sVGKeqxBOJkI7g1mupz8jyj8ZkhTJNCkjDcW9oNilmOjQ3b4E/h17ilj3S7HlrmVBo8/lV1eQfR4URapBFT43PHhp5TyvYqg0NW0EIR3i/KhFmkVki7bRuue7kL/otAfxqpbWIrpaT95PVFbCAjFi4W6+Ho=
+  app: blog-app-mongoose-challenge-solution
+  on:
+    repo: ElenaG518/blog-app-mongoose-challenge-solution
