@@ -32,8 +32,8 @@ function generateAuthorData(userName) {
   const authorItem = {
     firstName: faker.name.firstName(),
     lastName: faker.name.lastName(),
-    userName: userName,
-    id: uuid.v4()
+    userName: userName
+    
   };
 
   // console.log("authorItem ", authorItem);
@@ -62,31 +62,35 @@ function generateAuthorData(userName) {
 // can be used to generate seed data for db
 // or request.body data
 function generateBlogPostData() {
-    
-    Author
+
+  const seedData = [];
+    return Author
     .find()
-    .then( authors => {
-      if (authors) {
-        const seedData = [];
-        for (let i=0; i<10; i++) {
+    .then( function(authors) {
+        // console.log("generateBlog ", authors[0]);
+        
+        for (let i=0; i<authors.length; i++) {
+          const authorData = {
+            _id: authors[i]._id,
+            firstName: authors[i].firstName,
+            lastName: authors[i].lastName,
+            userName: authors[i].userName
+          };
+
+          // console.log("authorData in generateBlogs ", authorData);
   
           const blogItem = {
             title: faker.lorem.sentence(),
             content: faker.lorem.paragraph(),
-            author:  authors[i]
+            author:  authorData          
           };
         
           seedData.push(blogItem);
         }
-        console.log("seedData ", seedData[0].author._id);
+
+        // console.log("seedData ", seedData[0]);
         return BlogPost.insertMany(seedData);
-      } else {
-        const message = "authors not found";
-        return {message};
-      }
-    })
-    .catch(err => console.log(err) );
-  
+    });    
 }
 
 // this function deletes the entire database.
@@ -177,19 +181,18 @@ describe('BlogPosts API resource', function() {
         .get('/posts')
         .then(function(_res) {
           // so subsequent .then blocks can access response object
-          console.log("_res ", _res.body);
+          // console.log("all blogs ", _res.body);
           res = _res;
           expect(res).to.have.status(200);
-          // otherwise our db seeding didn't work
-          // console.log("res body in blogs ", res.body);
-          // expect(res.body).to.have.lengthOf.at.least(1);
+          expect(res).to.be.json;
+          expect(res.body).to.be.a('array');
+          expect(res.body).to.have.lengthOf.at.least(1);
           return BlogPost.countDocuments();
         })
         .then(function(count) {
           expect(res.body).to.have.lengthOf(count);
         });
     });
-
 
     it('should return blogs with right fields', function() {
       // Strategy: Get back all blogs, and ensure they have expected keys
@@ -198,29 +201,28 @@ describe('BlogPosts API resource', function() {
       return chai.request(app)
         .get('/posts')
         .then(function(res) {
+          // console.log("get blogs ", res.body);
           expect(res).to.have.status(200);
           expect(res).to.be.json;
           expect(res.body).to.be.a('array');
           expect(res.body).to.have.lengthOf.at.least(1);
-
-	      res.body.forEach(function(post) {
+	        res.body.forEach(function(post) {
             expect(post).to.be.a('object');
             expect(post).to.include.keys(
               'author', 'title', 'content', 'comments', 'id');
           });
+
           resBlogPost = res.body[0];
-           console.log("res body ", res.body[0]);
+          //  console.log("resBlogPost ", resBlogPost);
           return BlogPost.findById(resBlogPost.id);
         })
         .then(function(post) {
-          console.log("post ", post.body);
+          // console.log("post in test ", post);
           expect(resBlogPost.id).to.equal(post.id);
           // expect(resBlogPost.author).to.equal(post.author);
           expect(resBlogPost.title).to.equal(post.title);
           expect(resBlogPost.content).to.equal(post.content);          
-         expect(resBlogPost.comments.length).to.equal(post.comments.length);
-          
-          
+         expect(resBlogPost.comments.length).to.equal(post.comments.length);  
         });
     });
   });
@@ -231,37 +233,53 @@ describe('BlogPosts API resource', function() {
     // right keys, and that `id` is there (which means
     // the data was inserted into db)
     it('should add a new blog', function() {
+      const newBlogPost = {
+        title: faker.lorem.sentence(),
+        content: faker.lorem.paragraph()
+      };
 
-      const newBlogPost = generateBlogPostData();
-      
-      return chai.request(app)
-        .post('/posts')
-        .send(newBlogPost)
+      const authorData = {}
+        
+        return Author
+        .findOne()
+        .then(function (author) {
+            // console.log("post author ", author);
+            newBlogPost.authorId = author._id;
+            authorData.name = `${author.firstName} ${author.lastName}`.trim();
+                        
+            return chai.request(app)
+            // why does it drop the author db so taht author is not found through Id on server?
+            .post('/posts')
+            .send(newBlogPost);  
+        })
         .then(function(res) {
+          // console.log("post res ", res.body);
           expect(res).to.have.status(201);
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
-          expect(res.body).to.include.keys(
-              'author', 'title', 'content', 'comments');
-
-          // expect(res.body.author.firstName).to.equal(newBlogPost.author.firstName);
-          // expect(res.body.author.lastName).to.equal(newBlogPost.author.lastName);
+          expect(res.body).to.include.keys('id', 'author', 'title', 'content', 'comments');    
+          expect(res.body.author).to.equal(authorData.name);
+          expect(res.body.content).to.equal(newBlogPost.content);
+          expect(res.body.title).to.equal(newBlogPost.title);
           // cause Mongo should have created id on insertion
           expect(res.body.id).to.not.be.null;
-          expect(res.body.content).to.equal(newBlogPost.content);
           
-          
-          return BlogPost.findById(res.body.id);
-        })
-        .then(function(post) {
-          expect(post.author.firstName).to.equal(newBlogPost.author.firstName);
-          expect(post.author.lastName).to.equal(newBlogPost.author.lastName);
-          expect(post.title).to.equal(newBlogPost.title);
-          expect(post.content).to.equal(newBlogPost.content);
-          // created can't be the same as because faker is fake and schema calls for date now.
+        });                    
+    });    
+
+    it("Should error if not supplied all required values", function() {
+        const badRequestData = {
+          title: faker.lorem.sentence(),
+          content: faker.lorem.paragraph()
+        };
+        return chai.request(app)
+        .post("/posts")
+        .send(badRequestData)
+        .then(function (res) {
+            expect(res).to.have.status(400);
         });
     });
-  });
+  });  
 
   describe('PUT endpoint', function() {
 
@@ -272,30 +290,31 @@ describe('BlogPosts API resource', function() {
     //  4. Prove blog in db is correctly updated
     it('should update fields you send over', function() {
       const updateData = {
-        author:'Elena Granados',
-        content: 'To complete this challenge, we\'d like you to add integration tests for all four of the API endpoints. Your integration tests should use the strategy described in the previous assignment (set up db in known state, make a request to API, inspect response, inspect state of db, and tear down db). At a minimum, you should write tests for the normal case for each endpoint.'
+        title:'I wish I could Make this work',
+        content: 'To complete this challenge, we\'d like you to add integration tests for all four of the API endpoints.'
       };
 
       return BlogPost
         .findOne()
         .then(function(post) {
-          updateData.id = post.id;
-
+          console.log("put post ", post)
+          updateData.id = post._id;
+          console.log("updateData ", updateData);
           // make request then inspect it to make sure it reflects
           // data we sent
           return chai.request(app)
-            .put(`/posts/${post.id}`)
+            .put(`/posts/${post._id}`)
             .send(updateData);
         })
         .then(function(res) {
           expect(res).to.have.status(204);
-
           return BlogPost.findById(updateData.id);
         })
         .then(function(post) {
-          expect(post.author.firstName).to.equal(updateData.author.firstName);
-          expect(post.author.lastName).to.equal(updateData.author.lastName);
+          console.log("second put post ", post);
+          expect(post.title).to.equal(updateData.title);
           expect(post.content).to.equal(updateData.content);
+          // expect(post._id).to.equal(updateData._id);
         });
     });
   });

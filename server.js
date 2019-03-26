@@ -192,7 +192,6 @@ app.get('/posts/:id', (req, res) => {
 });
 
 app.post("/posts", (req, res) => {
-  console.log("body ", req.body)
   const requiredFields = ["title", "content", "authorId"];
   requiredFields.forEach(field => {
     if (!(field in req.body)) {
@@ -200,11 +199,13 @@ app.post("/posts", (req, res) => {
       console.error(message);
       return res.status(400).send(message);
     }
+    
   }) 
 
   Author
     .findById(req.body.authorId)
     .then(author => {
+      
       if (author) {
                 
         BlogPost
