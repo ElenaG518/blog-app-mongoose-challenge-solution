@@ -2,3 +2,10 @@ language: node_js
 node_js: node
 services:
 - mongodb
+deploy:
+  provider: heroku
+  api_key:
+    secure: F3rTjyGjrhSJRJGOX7twpa0nWAgAvYB5jVbSB9r6RiLwRlV3KGrPBfMSsfUKt3BgMz2ppzeZqys0j+MWUO4ACOVv2znRdGOcrN0hzvtOwVIPO+/UnnKqXqN56KDH5QKJ1uzl9RDaIeiNYSjSxnx7p94FvXaEQfLEedoWjMvDocJuQiHOHfTigy3KOjPP2K0SwJF1s9C70GW1/cNpaxp2LJjDmKGEYi2bzMQ3PuDccajx/qH2LEtS1DylZNTs1FQfkHKCHHQhfQRJl9HJzU0nKfyC+Zi3YkmOgckGC2DQFeCXENIxc2/bAYQcF4vNbyk8MpCKHZ4zl5z/cW5YevAgm5zQ4UbJbBYeQDyPhGvDIQ53Q/ssmWcLkim2bzXsOkE/TEFBzralPSJxyFtoNa1FTHe1NZnVkAo2zzjma96gJdtOJ7rJV/1UTCMWenRAZLq8rvG/dyiboo8ZaObE8AxLGh+5DfhWNJFQ0Cgv7W8psf0VOrx3RMEtrVmmnBzDQrPD90rHOZuiFxR1kMWcZx4TuXACiMT2y/vdtPkzEfbBo3jBkO/78B74JXKwd/SnY4yFPDQUNKZujdOv8Ojakh1pFP3Zei9RA6os4LTFzrm21b3mSWHa+Cxe8jp22RJNPLtCfAqhWSdNMGL15PNOfao0PNrAc5CwiSv2mQMwlHd04EI=
+  app: fathomless-crag-63869
+  on:
+    repo: ElenaG518/blog-app-mongoose-challenge-solution
