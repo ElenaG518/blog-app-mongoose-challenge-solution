@@ -4,55 +4,89 @@ const chai = require('chai');
 const chaiHttp = require('chai-http');
 const faker = require('faker');
 const mongoose = require('mongoose');
+const uuid = require("uuid");
 
 // this makes the expect syntax available throughout
 // this module
 const expect = chai.expect;
 
-const { BlogPost } = require('../models');
+const { Author, BlogPost } = require('../models');
 const { runServer, app, closeServer } = require('../server');
 const {TEST_DATABASE_URL} = require('../config');
 
 chai.use(chaiHttp);
+
+const authorData = [];
+
+function seedAuthorData() {
+  console.info("seeding author data");
+  const userName = ["pachi", "kenji", "chichiri", "pera", "malu", "raul", "luis", 'marce', "gaby", "cliff"];
+  for (let i=0; i< 10; i++) {
+    authorData.push(generateAuthorData(userName[i])); 
+   }
+  //  console.log(authorData);
+   return Author.insertMany(authorData);
+}
+
+function generateAuthorData(userName) {
+  const authorItem = {
+    firstName: faker.name.firstName(),
+    lastName: faker.name.lastName(),
+    userName: userName,
+    id: uuid.v4()
+  };
+
+  // console.log("authorItem ", authorItem);
+  return authorItem;
+}
 
 // used to put randomish documents in db
 // so we have data to work with and assert about.
 // we use the Faker library to automatically
 // generate placeholder values for author, title, content
 // and then we insert that data into mongo
-function seedBlogPostData() {
-  console.info('seeding blog data');
-  const seedData = [];
+// function seedBlogPostData() {
+//   console.info('seeding blog data');
+//   const seedData = [];
 
-  for (let i=1; i<=10; i++) {
-    seedData.push(generateBlogPostData());
-  }
-  // this will return a promise
-  return BlogPost.insertMany(seedData);
-}
-
-// used to generate data to put in db
-function generateTitleName() {
-  const titles = [
-    'Mind over Body', 'I Kick Ass at Making Money', 'I love Money and Money Loves Me', 'Think and Grow Rich', 'Love Coding'];
-  return titles[Math.floor(Math.random() * titles.length)];
-}
+//   for (let i=0; i<10; i++) {
+    
+//     seedData.push(generateBlogPostData(i));
+//   }
+//   // this will return a promise
+//   console.log(seedData);
+//   return BlogPost.insertMany(seedData);
+// }
 
 // generate an object represnting a blog.
 // can be used to generate seed data for db
 // or request.body data
 function generateBlogPostData() {
-  return {
-    author: {
-      firstName: faker.name.firstName(),
-      lastName: faker.name.lastName()
-    },
-    title: generateTitleName(),
-    content: faker.lorem.paragraph(),
-    created: faker.date.past(),
-  };
+  
+    Author
+    .find()
+    .then( authors => {
+      if (authors) {
+        const seedData = [];
+        for (let i=0; i<10; i++) {
+  
+          const blogItem = {
+            title: faker.lorem.sentence(),
+            content: faker.lorem.paragraph(),
+            author:  {ObjectID: authors[i]._id}
+          };
+        
+          seedData.push(blogItem);
+        }
+        console.log("seedData ", seedData);
+        return BlogPost.insertMany(seedData);
+      } else {
+        const message = "authors not found";
+        return {message};
+      }
+    });
+  
 }
-
 
 // this function deletes the entire database.
 // we'll call it in an `afterEach` block below
@@ -74,7 +108,13 @@ describe('BlogPosts API resource', function() {
   });
 
   beforeEach(function() {
-    return seedBlogPostData();
+    return seedAuthorData()
+    
+  });
+
+  beforeEach(function() {
+    return generateBlogPostData()
+    
   });
 
   afterEach(function() {
@@ -90,6 +130,32 @@ describe('BlogPosts API resource', function() {
   // on proving something small
   describe('GET endpoint', function() {
 
+    it('should return all existing authors', function() {
+      // strategy:
+      //    1. get back all blogs returned by GET request to `/posts`
+      //    2. prove res has right status, data type
+      //    3. prove the number of blogs we got back is equal to number
+      //       in db.
+      //
+      // need to have access to mutate and access `res` across
+      // `.then()` calls below, so declare it here so can modify in place
+      let res;
+      return chai.request(app)
+        .get('/authors')
+        .then(function(_res) {
+          // so subsequent .then blocks can access response object
+          // console.log(" get authors ", _res.body.authors);
+          res = _res;
+          expect(res).to.have.status(200);
+          // otherwise our db seeding didn't work
+          expect(res.body.authors).to.have.lengthOf.at.least(1);
+          return Author.countDocuments();
+        })
+        .then(function(count) {
+          expect(res.body.authors).to.have.lengthOf(count);
+        });
+    });
+
     it('should return all existing blogs', function() {
       // strategy:
       //    1. get back all blogs returned by GET request to `/posts`
@@ -104,11 +170,13 @@ describe('BlogPosts API resource', function() {
         .get('/posts')
         .then(function(_res) {
           // so subsequent .then blocks can access response object
+          console.log("_res ", _res);
           res = _res;
           expect(res).to.have.status(200);
           // otherwise our db seeding didn't work
-          expect(res.body).to.have.lengthOf.at.least(1);
-          return BlogPost.count();
+          // console.log("res body in blogs ", res.body);
+          // expect(res.body).to.have.lengthOf.at.least(1);
+          return BlogPost.countDocuments();
         })
         .then(function(count) {
           expect(res.body).to.have.lengthOf(count);
@@ -131,19 +199,21 @@ describe('BlogPosts API resource', function() {
 	      res.body.forEach(function(post) {
             expect(post).to.be.a('object');
             expect(post).to.include.keys(
-              'author', 'title', 'content', 'created');
+              'author', 'title', 'content', 'comments', 'id');
           });
           resBlogPost = res.body[0];
+           console.log("res body ", res.body[0]);
           return BlogPost.findById(resBlogPost.id);
         })
         .then(function(post) {
-
+          console.log("post ", post.body);
           expect(resBlogPost.id).to.equal(post.id);
-          expect(resBlogPost.author).to.equal(post.authorName);
-          
+          // expect(resBlogPost.author).to.equal(post.author);
           expect(resBlogPost.title).to.equal(post.title);
-          expect(resBlogPost.content).to.equal(post.content);
-          // expect(resBlogPost.created).to.equal(post.created);
+          expect(resBlogPost.content).to.equal(post.content);          
+         expect(resBlogPost.comments.length).to.equal(post.comments.length);
+          
+          
         });
     });
   });
@@ -165,7 +235,7 @@ describe('BlogPosts API resource', function() {
           expect(res).to.be.json;
           expect(res.body).to.be.a('object');
           expect(res.body).to.include.keys(
-              'author', 'title', 'content', 'created');
+              'author', 'title', 'content', 'comments');
 
           // expect(res.body.author.firstName).to.equal(newBlogPost.author.firstName);
           // expect(res.body.author.lastName).to.equal(newBlogPost.author.lastName);
