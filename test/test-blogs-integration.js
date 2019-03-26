@@ -62,7 +62,7 @@ function generateAuthorData(userName) {
 // can be used to generate seed data for db
 // or request.body data
 function generateBlogPostData() {
-  
+    
     Author
     .find()
     .then( authors => {
@@ -73,18 +73,19 @@ function generateBlogPostData() {
           const blogItem = {
             title: faker.lorem.sentence(),
             content: faker.lorem.paragraph(),
-            author:  {ObjectID: authors[i]._id}
+            author:  authors[i]
           };
         
           seedData.push(blogItem);
         }
-        console.log("seedData ", seedData);
+        console.log("seedData ", seedData[0].author._id);
         return BlogPost.insertMany(seedData);
       } else {
         const message = "authors not found";
         return {message};
       }
-    });
+    })
+    .catch(err => console.log(err) );
   
 }
 
@@ -170,7 +171,7 @@ describe('BlogPosts API resource', function() {
         .get('/posts')
         .then(function(_res) {
           // so subsequent .then blocks can access response object
-          console.log("_res ", _res);
+          console.log("_res ", _res.body);
           res = _res;
           expect(res).to.have.status(200);
           // otherwise our db seeding didn't work

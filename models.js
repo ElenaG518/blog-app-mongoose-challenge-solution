@@ -44,7 +44,7 @@ blogPostSchema.pre('findById', function(next) {
 // to generate a human readable string based on the author object
 // we're storing in Mongo.
 blogPostSchema.virtual('authorName').get(function() {
-  return `${this.firstName} ${this.lastName}`.trim();
+  return `${this.author.firstName} ${this.author.lastName}`.trim();
 });
 
 // this is an *instance method* which will be available on all instances
