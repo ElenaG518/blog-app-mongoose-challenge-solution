@@ -133,23 +133,29 @@ describe('BlogPosts API resource', function() {
 
     it('should return all existing authors', function() {
       // strategy:
-      //    1. get back all blogs returned by GET request to `/posts`
+      //    1. get back all authors returned by GET request to `/authors`
       //    2. prove res has right status, data type
-      //    3. prove the number of blogs we got back is equal to number
+      //    3. prove the number of authors we got back is equal to number
       //       in db.
       //
-      // need to have access to mutate and access `res` across
-      // `.then()` calls below, so declare it here so can modify in place
+
+      // need this variable so we can reference it throughout the function
+      // liek in the second .then call
       let res;
       return chai.request(app)
         .get('/authors')
         .then(function(_res) {
-          // so subsequent .then blocks can access response object
-          // console.log(" get authors ", _res.body.authors);
           res = _res;
+          // console.log("res ", res.body);
           expect(res).to.have.status(200);
           // otherwise our db seeding didn't work
+          expect(res).to.be.json;
+          expect(res.body.authors).to.be.a("array");
           expect(res.body.authors).to.have.lengthOf.at.least(1);
+          (res.body.authors).forEach(function(author) {
+            expect(author).to.be.a("object");
+            expect(author).to.have.all.keys("id", "name", "userName");
+          });
           return Author.countDocuments();
         })
         .then(function(count) {
