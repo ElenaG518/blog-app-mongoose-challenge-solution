@@ -9,3 +9,4 @@ deploy:
   app: fathomless-crag-63869
   on:
     repo: ElenaG518/blog-app-mongoose-challenge-solution
+    branch: master
